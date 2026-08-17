@@ -27,7 +27,7 @@ dependencies = [
     "steel-sdk>=0.19,<0.20",
     "uvicorn>=0.35,<1",
     "vaultlet==0.1.0",
-    "websockets>=16.1.1,<17",
+    "websockets>=17.0.1,<18",
 ]
 
 [project.scripts]
