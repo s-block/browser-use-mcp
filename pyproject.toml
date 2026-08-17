@@ -42,7 +42,7 @@ Security = "https://github.com/s-block/browser-use-mcp/security/policy"
 
 [dependency-groups]
 dev = [
-    "coverage>=7.10",
+    "coverage>=7.15.4",
     "detect-secrets>=1.5,<2",
     "mypy>=1.18",
     "pre-commit>=4.3",
