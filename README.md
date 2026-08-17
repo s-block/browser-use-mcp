@@ -4,37 +4,130 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/s-block/browser-use-mcp/blob/main/LICENSE)
 [![Python 3.12–3.14](https://img.shields.io/badge/python-3.12%E2%80%933.14-blue.svg)](https://www.python.org/)
 
-`browser-use-mcp` is a fully async Python MCP server for authorized browser
-automation:
+**Give AI agents a persistent, secure browser over MCP.**
+
+`browser-use-mcp` lets MCP clients navigate websites, interact with pages,
+extract data, and reopen named browser profiles with their authenticated website
+state intact. It combines semantic Stagehand actions with deterministic browser
+controls, while isolating tenants and encrypting persisted profile metadata.
+
+It is designed for running browser agents as a service: browser operations are
+bounded, named profiles have one-writer leases, browser requests are checked
+against a network policy, and session lifecycle events are audited without page
+content or secrets.
+
+```mermaid
+sequenceDiagram
+    participant Client as MCP client
+    participant Server as browser-use-mcp
+    participant Profile as Named Chromium profile
+    Client->>Server: Start profile "work"
+    Server->>Profile: Open browser session
+    Client->>Profile: Sign in to an authorized site
+    Client->>Server: Close session
+    Server->>Profile: Retain authenticated state
+    Client->>Server: Reopen profile "work" later
+    Server->>Profile: Restore authenticated browser state
+```
+
+## Why browser-use-mcp?
+
+- **Persistent authenticated profiles.** Reuse a named Steel profile in later
+  browser sessions instead of signing in for every agent run.
+- **Semantic and deterministic control.** Use Stagehand when the task depends on
+  page meaning; use constrained selector controls for known clicks, fields,
+  keys, text, titles, and URLs without a model call.
+- **Service-ready isolation.** Tenant-scoped profiles and browser sessions,
+  cross-process profile leases, authenticated encrypted metadata, optional
+  bearer authentication, bounded concurrency, and secret-safe audit events.
+- **Remote Chromium.** The MCP service stays small while Steel owns the browser,
+  browser profile data, and Chromium runtime.
+
+## Quick start
+
+You need Python 3.12 through 3.14, [uv](https://docs.astral.sh/uv/), a Steel
+deployment, and a Steel API key when using Steel Cloud. Semantic actions also
+need an OpenAI-compatible Chat Completions endpoint; deterministic controls do
+not call a model.
+
+Clone the repository and install its locked dependencies:
+
+```bash
+git clone https://github.com/s-block/browser-use-mcp.git
+cd browser-use-mcp
+uv sync --dev --frozen
+```
+
+Configure a trusted local instance:
+
+```bash
+export BROWSER_USE_MCP_STORAGE_MASTER_KEY="$(uv run python - <<'PY'
+import base64
+import secrets
+print(base64.b64encode(secrets.token_bytes(32)).decode())
+PY
+)"
+export STEEL_API_KEY="..."
+export BROWSER_USE_MCP_LLM_BASE_URL="https://api.openai.com/v1"
+export BROWSER_USE_MCP_LLM_API_KEY="..."
+export BROWSER_USE_MCP_LLM_MODEL="your-model"
+export BROWSER_USE_MCP_ALLOW_PRIVATE_NETWORK=true
+uv run browser-use-mcp
+```
+
+The Streamable HTTP endpoint is `http://127.0.0.1:8000/mcp`, and the
+unauthenticated health endpoint is `/healthz`. The private-network setting is an
+explicit acknowledgement for a trusted, loopback-only development environment;
+shared deployments need the egress boundary described in
+[Security boundary](#security-boundary).
+
+For an MCP client that launches servers over standard input and output:
+
+```bash
+export BROWSER_USE_MCP_TRANSPORT=stdio
+uv run browser-use-mcp
+```
+
+Stdio mode does not open an HTTP port. It uses the local unauthenticated
+principal because the launching MCP client or gateway owns the connection and
+its authorization boundary.
+
+## Example agent prompts
+
+- “Open Hacker News and summarize the top five stories.”
+- “Start a named profile called `work`, sign in to my authorized test account,
+  and close the browser session when you are done.”
+- “Reopen the `work` profile and check whether I have any GitHub notifications.”
+- “Find the pricing page and extract the enterprise features.”
+- “Open this page, find the sign-up button, and tell me what information the
+  form requires.”
+
+Use only websites and accounts you own or are authorized to automate. For
+credential fields, deterministic controls avoid sending the field operation to
+the configured model provider; review the model disclosure details before using
+semantic tools on authenticated pages.
+
+## Choose the right control mode
+
+| Mode | Tools | Best for | Model call |
+| --- | --- | --- | --- |
+| Semantic | `browser_act`, `browser_observe`, `browser_extract` | Tasks that depend on page meaning or changing layouts | Yes |
+| Deterministic | `browser_control` | Known selectors, fields, keys, and page properties | No |
+
+Both modes use the same bounded browser session and network policy.
+
+## How it works
 
 ```text
 MCP client → browser-use-mcp → Stagehand → Steel → Chromium
 ```
 
-It uses the current async
-[MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk), attaches
-[Stagehand](https://github.com/browserbase/stagehand) directly to a
-[Steel](https://docs.steel.dev/overview/intro-to-steel) Chromium session over CDP,
-and exposes a deliberately small semantic tool surface.
-
-## Capabilities
-
-- temporary browser sessions that leave no local profile record;
-- named, writable Steel profiles that preserve authenticated website sessions;
-- one-writer profile leases across async tasks and server processes;
-- isolated profile and browser-session namespaces per configured tenant;
-- authenticated Vaultlet encryption for persisted profile locators;
-- optional HTTP bearer client-secret authentication;
-- request-scoped or environment-default OpenAI-compatible model settings;
-- bounded session concurrency, operation time, navigation, and response sizes;
-- request-time browser network interception, with private-network blocking when
-  an authoritative public-only Steel egress boundary is configured; and
-- a constrained selector-based control escape hatch without arbitrary
-  JavaScript execution.
-
-The server does not expose provider session identifiers, profile filesystem
-paths, encryption keys, cookies, or LLM credentials through MCP.
-Returned browser URLs omit query strings, fragments, and embedded credentials.
+This is an independent MCP server built on the current async
+[MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk),
+[Stagehand](https://github.com/browserbase/stagehand), and
+[Steel](https://docs.steel.dev/overview/intro-to-steel). Stagehand attaches to
+the Steel-hosted Chromium session over CDP. The MCP-facing models remain smaller
+than the upstream browser and page representations.
 
 ## MCP tools
 
@@ -49,7 +142,13 @@ Returned browser URLs omit query strings, fragments, and embedded credentials.
 | `browser_control` | Click, fill, type, press a key, or read text/title/URL |
 | `browser_profiles_list` | List named profiles in the current client namespace |
 
-Start a named session to persist website authentication:
+The server does not expose provider session identifiers, profile filesystem
+paths, encryption keys, cookies, or LLM credentials through MCP. Returned
+browser URLs omit query strings, fragments, and embedded credentials.
+
+## Persistent profiles
+
+Start a named session to preserve authenticated website state:
 
 ```json
 {
@@ -59,8 +158,8 @@ Start a named session to persist website authentication:
 
 Always close the returned session. The profile remains leased and unavailable
 to another writer until `browser_session_close` completes. Closing also waits
-for Steel to finish uploading the profile before the profile is reused.
-If closing reports a provider error, retry the same close call; the server keeps
+for Steel to finish uploading the profile before the profile is reused. If
+closing reports a provider error, retry the same close call; the server keeps
 the session capacity and profile lease until cleanup succeeds or it shuts down.
 
 ## Security boundary
@@ -141,61 +240,6 @@ export BROWSER_USE_MCP_STEEL_SOLVE_CAPTCHA=true
 When enabled, the server waits for Steel's solver before and after browser
 operations, stops on reported solve failures, and bounds polling by the CAPTCHA
 and operation timeouts.
-
-## Requirements
-
-- Python 3.12 through 3.14;
-- a Steel deployment and, for Steel Cloud, a `STEEL_API_KEY`; and
-- an OpenAI-compatible Chat Completions endpoint for semantic tools.
-
-Chromium runs in Steel, so the application image contains no local browser or
-browser system packages.
-
-## Local setup
-
-Install the locked dependencies:
-
-```bash
-uv sync --dev --frozen
-```
-
-For a trusted local deployment, unauthenticated mode is the default and is
-restricted to loopback:
-
-```bash
-export BROWSER_USE_MCP_STORAGE_MASTER_KEY="$(python - <<'PY'
-import base64
-import secrets
-print(base64.b64encode(secrets.token_bytes(32)).decode())
-PY
-)"
-export STEEL_API_KEY="..."
-export BROWSER_USE_MCP_LLM_BASE_URL="https://api.openai.com/v1"
-export BROWSER_USE_MCP_LLM_API_KEY="..."
-export BROWSER_USE_MCP_LLM_MODEL="your-model"
-export BROWSER_USE_MCP_ALLOW_PRIVATE_NETWORK=true
-uv run browser-use-mcp
-```
-
-HTTP is the default transport. The Streamable HTTP endpoint is
-`http://127.0.0.1:8000/mcp`, and the unauthenticated health endpoint is
-`/healthz`.
-
-The private-network setting in this loopback-only example is the explicit local
-development acknowledgement described in [Security boundary](#security-boundary).
-Use an authoritative public-only Steel egress boundary for shared deployments.
-
-For a client that launches MCP servers over standard input and output, select
-the stdio transport instead:
-
-```bash
-export BROWSER_USE_MCP_TRANSPORT=stdio
-uv run browser-use-mcp
-```
-
-Stdio mode does not open an HTTP port. It uses the unauthenticated local
-principal because the launching MCP client or gateway owns the connection and
-its authorization boundary.
 
 ## Client-secret authentication
 
