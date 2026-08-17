@@ -372,7 +372,14 @@ clients that send an `Origin` header.
 
 ## Container
 
-Build the Alpine-based, non-root image:
+Each successful `main` build publishes the Alpine-based, non-root image to
+GitHub Container Registry with `latest` and immutable `sha-<commit>` tags:
+
+```bash
+docker pull ghcr.io/s-block/browser-use-mcp:latest
+```
+
+To build the same image locally:
 
 ```bash
 docker build -t browser-use-mcp .
@@ -392,7 +399,7 @@ docker run --rm --read-only --cap-drop=ALL \
   --network mcp-backend \
   --name browser-use-mcp \
   --env-file /etc/browser-use-mcp/runtime.env \
-  browser-use-mcp
+  ghcr.io/s-block/browser-use-mcp:latest
 ```
 
 The runtime environment for that deployment includes at least:
