@@ -1,0 +1,120 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "browser-use-mcp"
+version = "0.1.0"
+description = "A secure async MCP server for Stagehand and Steel browser automation"
+readme = "README.md"
+requires-python = ">=3.12,<3.15"
+license = { file = "LICENSE" }
+authors = [{ name = "Joshua Rowe" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "httpx>=0.28,<1",
+    "mcp>=2,<3",
+    "pydantic>=2.12,<3",
+    "stagehand==4.0.0",
+    "steel-sdk>=0.19,<0.20",
+    "uvicorn>=0.35,<1",
+    "vaultlet==0.1.0",
+    "websockets>=16.1.1,<17",
+]
+
+[project.scripts]
+browser-use-mcp = "browser_use_mcp.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/s-block/browser-use-mcp"
+Repository = "https://github.com/s-block/browser-use-mcp.git"
+Issues = "https://github.com/s-block/browser-use-mcp/issues"
+Changelog = "https://github.com/s-block/browser-use-mcp/blob/main/CHANGELOG.md"
+Security = "https://github.com/s-block/browser-use-mcp/security/policy"
+
+[dependency-groups]
+dev = [
+    "coverage>=7.10",
+    "detect-secrets>=1.5,<2",
+    "mypy>=1.18",
+    "pre-commit>=4.3",
+    "pytest>=8.4",
+    "pytest-asyncio>=1.2",
+    "ruff>=0.13",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/browser_use_mcp"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/browser_use_mcp",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+]
+
+[tool.uv]
+package = true
+exclude-newer = "7 days"
+exclude-newer-package = { stagehand = false, vaultlet = false }
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "ASYNC",
+    "B",
+    "C4",
+    "E",
+    "F",
+    "I",
+    "N",
+    "RUF",
+    "S",
+    "SIM",
+    "TCH",
+    "UP",
+    "W",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/browser_use_mcp/server.py" = ["TC001", "TC003"]
+"tests/**/*.py" = ["S101", "S105", "S106"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["src/browser_use_mcp", "tests"]
+strict = true
+warn_unused_ignores = true
+show_error_codes = true
+pretty = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-config",
+    "--strict-markers",
+    "--import-mode=importlib",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

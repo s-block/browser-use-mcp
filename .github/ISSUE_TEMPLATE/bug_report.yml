@@ -1,0 +1,58 @@
+name: Bug report
+description: Report a reproducible problem using sanitized data
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Remove credentials, cookies, browser profiles, private URLs, page data,
+        and screenshots containing sensitive information. Report security
+        vulnerabilities using the private security link instead.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety checks
+      options:
+        - label: I removed credentials, session data, and private page content.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true
+        - label: I searched existing issues for the same problem.
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Provide the image tag, digest, release, or commit SHA.
+      placeholder: sha-0123456789abcdef
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Provide safe steps using a public test page or sanitized fixture.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, architecture, Docker and Python versions, browser, and MCP client where relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs
+      description: Remove authorization data, cookies, URLs, form values, and page content.
+      render: shell

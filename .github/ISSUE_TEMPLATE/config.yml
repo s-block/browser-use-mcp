@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/s-block/browser-use-mcp/security/advisories/new
+    about: Report vulnerabilities privately without exposing sensitive details.
+  - name: Documentation
+    url: https://github.com/s-block/browser-use-mcp/blob/main/README.md
+    about: Review project status, development setup, and validation commands.

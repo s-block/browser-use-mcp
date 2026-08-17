@@ -1,0 +1,21 @@
+name: Private contact request
+description: Ask the maintainer to arrange a confidential reporting channel
+title: "[Private contact]: "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this only when the repository's private reporting form is
+        unavailable. This issue is public. Do not include vulnerability,
+        conduct, personal, credential, session, or browsing details.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: This issue contains only a request for private contact.
+          required: true
+        - label: I have not included sensitive or identifying details.
+          required: true

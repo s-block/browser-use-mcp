@@ -1,0 +1,38 @@
+name: browser-use-mcp
+title: Browser Use MCP
+type: server
+description: Authorized Stagehand browser automation on Steel Chromium
+image: browser-use-mcp:local
+longLived: true
+volumes:
+  - browser-use-mcp-data:/data
+secrets:
+  - name: browser-use-mcp.storage-master-key
+    env: BROWSER_USE_MCP_STORAGE_MASTER_KEY
+    example: <BASE64_32_BYTE_KEY>
+  - name: browser-use-mcp.steel-api-key
+    env: STEEL_API_KEY
+    example: <STEEL_API_KEY>
+  - name: browser-use-mcp.llm-api-key
+    env: BROWSER_USE_MCP_LLM_API_KEY
+    example: <LLM_API_KEY>
+  - name: browser-use-mcp.steel-public-only-proxy-url
+    env: BROWSER_USE_MCP_STEEL_PROXY_URL
+    example: <PUBLIC_ONLY_PROXY_URL>
+env:
+  - name: BROWSER_USE_MCP_TRANSPORT
+    value: stdio
+  - name: BROWSER_USE_MCP_AUTH_MODE
+    value: none
+  - name: BROWSER_USE_MCP_LLM_BASE_URL
+    value: https://api.openai.com/v1
+  - name: BROWSER_USE_MCP_LLM_MODEL
+    value: replace-with-supported-model
+  - name: BROWSER_USE_MCP_PUBLIC_NETWORK_EGRESS_ENFORCED
+    value: true
+  - name: BROWSER_USE_MCP_STEEL_NETWORK_IDENTITY
+    value: dedicated-public-only-proxy
+allowHosts:
+  - api.steel.dev:443
+  - connect.steel.dev:443
+  - api.openai.com:443

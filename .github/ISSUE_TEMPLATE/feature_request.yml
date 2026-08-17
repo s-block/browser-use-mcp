@@ -1,0 +1,38 @@
+name: Feature request
+description: Propose a scoped improvement to browser-use-mcp
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Initial checks
+      options:
+        - label: I searched existing issues for the same request.
+          required: true
+        - label: This request is for authorized browser automation.
+          required: true
+        - label: This request contains no credentials, session data, or private page content.
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem should be solved?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the smallest useful behavior and any alternatives considered.
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Security and privacy impact
+      description: Explain new permissions, browsing data, network access, writes, or durable state.
+    validations:
+      required: true
