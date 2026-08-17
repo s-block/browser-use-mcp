@@ -42,6 +42,22 @@ uv run pre-commit install
 - Pin Docker base images by version and digest and GitHub Actions by full commit
   SHA.
 
+## Ways to contribute
+
+Useful, reviewable contributions include:
+
+- compatibility fixes and setup examples for MCP clients;
+- Stagehand, Steel, and other browser-provider integration improvements;
+- security hardening, isolation, network-policy, and audit improvements;
+- semantic actions and constrained deterministic browser controls;
+- deployment and MCP gateway examples; and
+- documentation, tutorials, and profile-persistence demo assets recorded only
+  with public test pages or sanitized test accounts.
+
+Open a feature request before work that changes a trust boundary, browser
+provider, public tool contract, or persistence model. Report suspected
+vulnerabilities privately as described in `SECURITY.md`.
+
 ## Validation
 
 Run the complete local checks:

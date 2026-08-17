@@ -22,6 +22,21 @@ body:
       description: What user problem should be solved?
     validations:
       required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Contribution area
+      description: Which part of the project does this request primarily affect?
+      options:
+        - MCP client compatibility
+        - Browser or provider integration
+        - Security and isolation
+        - Browser actions
+        - Deployment example
+        - Documentation or demo
+        - Other scoped improvement
+    validations:
+      required: true
   - type: textarea
     id: proposal
     attributes:

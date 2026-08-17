@@ -10,6 +10,20 @@ readme = "README.md"
 requires-python = ">=3.12,<3.15"
 license = { file = "LICENSE" }
 authors = [{ name = "Joshua Rowe" }]
+keywords = [
+    "mcp",
+    "model-context-protocol",
+    "browser-automation",
+    "ai-agents",
+    "agentic-ai",
+    "chromium",
+    "stagehand",
+    "steel",
+    "web-automation",
+    "asyncio",
+    "llm",
+    "browser-agent",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -35,7 +49,8 @@ browser-use-mcp = "browser_use_mcp.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/s-block/browser-use-mcp"
-Repository = "https://github.com/s-block/browser-use-mcp.git"
+Documentation = "https://github.com/s-block/browser-use-mcp#readme"
+Source = "https://github.com/s-block/browser-use-mcp"
 Issues = "https://github.com/s-block/browser-use-mcp/issues"
 Changelog = "https://github.com/s-block/browser-use-mcp/blob/main/CHANGELOG.md"
 Security = "https://github.com/s-block/browser-use-mcp/security/policy"

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Changed
+
+- Product documentation now leads with persistent authenticated profiles,
+  semantic and deterministic controls, a short setup path, safe example tasks,
+  and a profile-persistence demo guide.
+- Package metadata now includes browser-agent discovery keywords and complete
+  project documentation, source, issue, changelog, and security links.
+
 ### Added
 
 - Initial Python package, test, and distribution scaffold for

@@ -1,34 +1,15 @@
-# browser-use-mcp
+# Give your AI agent a persistent, secure browser over MCP
 
-[![CI](https://github.com/s-block/browser-use-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/s-block/browser-use-mcp/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/s-block/browser-use-mcp/blob/main/LICENSE)
-[![Python 3.12–3.14](https://img.shields.io/badge/python-3.12%E2%80%933.14-blue.svg)](https://www.python.org/)
-
-**Give AI agents a persistent, secure browser over MCP.**
+[![CI][ci-b]][ci] [![MIT][mit-b]][mit] [![Python][py-b]][py]
 
 `browser-use-mcp` lets MCP clients navigate websites, interact with pages,
-extract data, and reopen named browser profiles with their authenticated website
-state intact. It combines semantic Stagehand actions with deterministic browser
-controls, while isolating tenants and encrypting persisted profile metadata.
+extract data, and reopen named browser profiles with authenticated website state
+retained where the site and provider support it. It combines semantic Stagehand
+actions with deterministic browser controls while isolating tenants and
+encrypting persisted profile metadata.
 
-It is designed for running browser agents as a service: browser operations are
-bounded, named profiles have one-writer leases, browser requests are checked
-against a network policy, and session lifecycle events are audited without page
-content or secrets.
-
-```mermaid
-sequenceDiagram
-    participant Client as MCP client
-    participant Server as browser-use-mcp
-    participant Profile as Named Chromium profile
-    Client->>Server: Start profile "work"
-    Server->>Profile: Open browser session
-    Client->>Profile: Sign in to an authorized site
-    Client->>Server: Close session
-    Server->>Profile: Retain authenticated state
-    Client->>Server: Reopen profile "work" later
-    Server->>Profile: Restore authenticated browser state
-```
+This is an independent MCP server built on Stagehand and Steel. It is not
+affiliated with the separate Browser Use project.
 
 ## Why browser-use-mcp?
 
@@ -37,25 +18,28 @@ sequenceDiagram
 - **Semantic and deterministic control.** Use Stagehand when the task depends on
   page meaning; use constrained selector controls for known clicks, fields,
   keys, text, titles, and URLs without a model call.
-- **Service-ready isolation.** Tenant-scoped profiles and browser sessions,
-  cross-process profile leases, authenticated encrypted metadata, optional
-  bearer authentication, bounded concurrency, and secret-safe audit events.
+- **Multi-tenant isolation.** Tenant-scoped profiles and browser sessions,
+  cross-process profile leases, and authenticated encrypted metadata through
+  [Vaultlet](https://github.com/s-block/vaultlet).
+- **Defence in depth.** Bounded operations, optional bearer authentication,
+  private-network request controls, a restricted browser-control surface, and
+  secret-safe audit events.
 - **Remote Chromium.** The MCP service stays small while Steel owns the browser,
   browser profile data, and Chromium runtime.
 
 ## Quick start
 
-You need Python 3.12 through 3.14, [uv](https://docs.astral.sh/uv/), a Steel
-deployment, and a Steel API key when using Steel Cloud. Semantic actions also
-need an OpenAI-compatible Chat Completions endpoint; deterministic controls do
-not call a model.
+You need Python 3.12 through 3.14, [uv](https://docs.astral.sh/uv/), a
+[Steel](https://docs.steel.dev/overview/intro-to-steel) deployment, and a Steel
+API key when using Steel Cloud. Semantic actions also need an OpenAI-compatible
+Chat Completions endpoint; deterministic controls do not call a model.
 
 Clone the repository and install its locked dependencies:
 
 ```bash
 git clone https://github.com/s-block/browser-use-mcp.git
 cd browser-use-mcp
-uv sync --dev --frozen
+uv sync --frozen
 ```
 
 Configure a trusted local instance:
@@ -68,9 +52,6 @@ print(base64.b64encode(secrets.token_bytes(32)).decode())
 PY
 )"
 export STEEL_API_KEY="..."
-export BROWSER_USE_MCP_LLM_BASE_URL="https://api.openai.com/v1"
-export BROWSER_USE_MCP_LLM_API_KEY="..."
-export BROWSER_USE_MCP_LLM_MODEL="your-model"
 export BROWSER_USE_MCP_ALLOW_PRIVATE_NETWORK=true
 uv run browser-use-mcp
 ```
@@ -81,7 +62,21 @@ explicit acknowledgement for a trusted, loopback-only development environment;
 shared deployments need the egress boundary described in
 [Security boundary](#security-boundary).
 
-For an MCP client that launches servers over standard input and output:
+Connect an MCP client that supports Streamable HTTP:
+
+```json
+{
+  "mcpServers": {
+    "browser-use-mcp": {
+      "type": "http",
+      "url": "http://127.0.0.1:8000/mcp"
+    }
+  }
+}
+```
+
+Client configuration formats vary. For a client that launches servers over
+standard input and output, set the transport before starting the process:
 
 ```bash
 export BROWSER_USE_MCP_TRANSPORT=stdio
@@ -92,6 +87,20 @@ Stdio mode does not open an HTTP port. It uses the local unauthenticated
 principal because the launching MCP client or gateway owns the connection and
 its authorization boundary.
 
+Try this first task using only deterministic controls:
+
+> Start a temporary browser session, open `https://example.com`, read the page
+> title, and close the session.
+
+To enable `browser_act`, `browser_observe`, and `browser_extract`, also configure
+an OpenAI-compatible Chat Completions endpoint:
+
+```bash
+export BROWSER_USE_MCP_LLM_BASE_URL="https://api.openai.com/v1"
+export BROWSER_USE_MCP_LLM_API_KEY="..."
+export BROWSER_USE_MCP_LLM_MODEL="your-model"
+```
+
 ## Example agent prompts
 
 - “Open Hacker News and summarize the top five stories.”
@@ -101,6 +110,8 @@ its authorization boundary.
 - “Find the pricing page and extract the enterprise features.”
 - “Open this page, find the sign-up button, and tell me what information the
   form requires.”
+- “Use the `#continue` selector to click the next button, then semantically
+  summarize the page that appears.”
 
 Use only websites and accounts you own or are authorized to automate. For
 credential fields, deterministic controls avoid sending the field operation to
@@ -116,18 +127,66 @@ semantic tools on authenticated pages.
 
 Both modes use the same bounded browser session and network policy.
 
+## Persistent authenticated profiles
+
+A named profile separates the browser session, which is temporary, from the
+provider-managed Chromium profile, which can be reopened later:
+
+1. Call `browser_session_start` with `{"profile_name": "work"}`.
+2. Navigate to an authorized site and sign in to a test account.
+3. Call `browser_session_close` and wait for Steel to finish saving the profile.
+4. Later, start another session with the same `profile_name`.
+5. Continue from the retained website session if it remains valid.
+
+Target websites can expire or revoke sessions, and persistence depends on the
+configured Steel profile provider. Credentials, cookies, and Chromium profile
+files are never copied into the MCP server's Vaultlet database.
+
+```mermaid
+sequenceDiagram
+    participant Client as MCP client
+    participant Server as browser-use-mcp
+    participant Profile as Named Chromium profile
+    Client->>Server: Start profile "work"
+    Server->>Profile: Open browser session
+    Client->>Profile: Sign in to an authorized site
+    Client->>Server: Close session
+    Server->>Profile: Save profile state
+    Client->>Server: Reopen profile "work" later
+    Server->>Profile: Restore profile state
+```
+
+## Demo
+
+A profile-persistence demo is being prepared; no placeholder media is embedded.
+The 15–30 second recording should use a public test site or sanitized test
+account and show, in order:
+
+1. open a profile named `demo-account`;
+2. authenticate without showing credentials;
+3. close the session and wait for the profile save to complete;
+4. reopen `demo-account` in a new browser session; and
+5. show a harmless authenticated-state cue without signing in again.
+
+The final recording should be readable without audio and must not expose API
+keys, cookies, profile identifiers, private page content, or unrelated
+notifications.
+
 ## How it works
 
 ```text
 MCP client → browser-use-mcp → Stagehand → Steel → Chromium
 ```
 
-This is an independent MCP server built on the current async
+The current implementation uses the async
 [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk),
 [Stagehand](https://github.com/browserbase/stagehand), and
 [Steel](https://docs.steel.dev/overview/intro-to-steel). Stagehand attaches to
 the Steel-hosted Chromium session over CDP. The MCP-facing models remain smaller
-than the upstream browser and page representations.
+than the upstream browser and page representations. Steel retains the actual
+Chromium profile; [Vaultlet](https://github.com/s-block/vaultlet) is the
+encrypted multi-tenant persistence layer for the profile catalogue and provider
+locator metadata.
 
 ## MCP tools
 
@@ -146,7 +205,7 @@ The server does not expose provider session identifiers, profile filesystem
 paths, encryption keys, cookies, or LLM credentials through MCP. Returned
 browser URLs omit query strings, fragments, and embedded credentials.
 
-## Persistent profiles
+## Profile lifecycle details
 
 Start a named session to preserve authenticated website state:
 
@@ -295,10 +354,11 @@ authorization layer and must not be used as profile-encryption key material.
 
 ## Profile encryption
 
-Vaultlet stores the profile catalogue and Steel profile locator metadata in an
-authenticated encrypted SQLite database. Tenant IDs, profile names, and values
-are blinded or encrypted before they reach SQLite. The server applies a maximum
-of 1,000 profiles per tenant when enumerating the catalogue.
+[Vaultlet](https://github.com/s-block/vaultlet) stores the profile catalogue and
+Steel profile locator metadata in an authenticated encrypted SQLite database.
+Tenant IDs, profile names, and values are blinded or encrypted before they
+reach SQLite. The server applies a maximum of 1,000 profiles per tenant when
+enumerating the catalogue.
 
 `BROWSER_USE_MCP_STORAGE_MASTER_KEY` is a standard Base64-encoded 256-bit key.
 Provision the same key to every server process sharing the database and keep it
@@ -516,8 +576,17 @@ lockfile validation, secret detection, Markdown, tests, package builds, a
 non-root container smoke test, and Dockerfile/image scanning.
 
 Use only websites and accounts you own or are authorized to automate. Review
-the [security policy](SECURITY.md) before exposing the service.
+the [security policy](https://github.com/s-block/browser-use-mcp/blob/main/SECURITY.md)
+before exposing the service.
 
 ## License
 
-This project is available under the [MIT License](LICENSE).
+This project is available under the
+[MIT License](https://github.com/s-block/browser-use-mcp/blob/main/LICENSE).
+
+[ci]: https://github.com/s-block/browser-use-mcp/actions/workflows/ci.yml
+[ci-b]: https://github.com/s-block/browser-use-mcp/actions/workflows/ci.yml/badge.svg
+[mit]: https://github.com/s-block/browser-use-mcp/blob/main/LICENSE
+[mit-b]: https://img.shields.io/badge/license-MIT-blue.svg
+[py]: https://www.python.org/
+[py-b]: https://img.shields.io/badge/python-3.12%E2%80%933.14-blue.svg
