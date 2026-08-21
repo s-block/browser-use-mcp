@@ -4,6 +4,7 @@ Create the Codex cloud environment for `s-block/browser-use-mcp` with the
 default `universal` image and these settings:
 
 - Python: `3.12`
+- uv: `0.10.4` (installed by the setup script)
 - Node.js: `22`
 - Setup script: `bash .codex/setup.sh`
 - Maintenance script: `bash .codex/setup.sh`
