@@ -117,7 +117,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28,<1" },
     { name = "mcp", specifier = ">=2,<3" },
     { name = "pydantic", specifier = ">=2.12,<3" },
-    { name = "stagehand", specifier = "==4.0.0" },
+    { name = "stagehand", specifier = "==4.0.1" },
     { name = "steel-sdk", specifier = ">=0.19,<0.20" },
     { name = "uvicorn", specifier = ">=0.35,<1" },
     { name = "vaultlet", specifier = "==0.1.0" },
@@ -1198,7 +1198,7 @@ wheels = [
 
 [[package]]
 name = "stagehand"
-version = "4.0.0"
+version = "4.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "browserbase" },
@@ -1206,9 +1206,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ea/af/7f3cb04497d71b0a4c6944db00dd1c001d2bba2b9d3e4a78e05707984045/stagehand-4.0.0.tar.gz", hash = "sha256:842549cbecf45557c20b17cd2ea4e454a8080f756dbff59a50aa93cb7db62a16", size = 482959, upload-time = "2026-08-10T06:38:36.323Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2c/ee/09fd114107e11f21a3309646dc8d218946ff6b4078a665062526136c3d36/stagehand-4.0.1.tar.gz", hash = "sha256:5b50306fd3b198c27826ad158ff3d4e8b59df8b19ddb8cf65900580a6aded92a", size = 483364, upload-time = "2026-08-14T00:07:20.364Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/8e/bb578acfe581ddff13091e87995d586dd14fb185bdc33bf7523060dcc693/stagehand-4.0.0-py3-none-any.whl", hash = "sha256:aae7d4b66b85f6a00d1fb44f53cab95b7fe33e8f2ca1e4f4721b6e26ee45c265", size = 494922, upload-time = "2026-08-10T06:38:34.889Z" },
+    { url = "https://files.pythonhosted.org/packages/86/76/8c4a52044d94240ab92bbc83a60003ce05fe5131a883becd3bb43298bf78/stagehand-4.0.1-py3-none-any.whl", hash = "sha256:cdaee125621a1f7976ee7b32b38e1852fd7c9ed59f83ce51fb5887c37a5d046f", size = 495593, upload-time = "2026-08-14T00:07:18.948Z" },
 ]
 
 [[package]]
