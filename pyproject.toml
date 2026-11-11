@@ -35,11 +35,11 @@ classifiers = [
 ]
 dependencies = [
     "httpx>=0.28,<1",
-    "mcp>=2,<3",
+    "mcp>=2.2,<3",
     "pydantic>=2.12,<3",
-    "stagehand==4.0.0",
+    "stagehand==4.0.1",
     "steel-sdk>=0.19,<0.20",
-    "uvicorn>=0.35,<1",
+    "uvicorn>=0.52.3,<1",
     "vaultlet==0.1.0",
     "websockets>=17.0.1,<18",
 ]
@@ -59,11 +59,11 @@ Security = "https://github.com/s-block/browser-use-mcp/security/policy"
 dev = [
     "coverage>=7.15.4",
     "detect-secrets>=1.5,<2",
-    "mypy>=1.18",
-    "pre-commit>=4.3",
+    "mypy>=2.3.1",
+    "pre-commit>=4.6.2",
     "pytest>=8.4",
     "pytest-asyncio>=1.2",
-    "ruff>=0.16.2",
+    "ruff>=0.16.3",
 ]
 
 [tool.hatch.build.targets.wheel]
