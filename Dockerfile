@@ -1,6 +1,6 @@
 FROM ghcr.io/astral-sh/uv:0.13.7@sha256:96f40d3904aad8d0bd010539001d36c8e2188b981e1334471a90c4a1d93bb490 AS uv
 
-FROM python:3.13.14-alpine3.23@sha256:9fdbf2e3e82628351513560b121e2ee6ce31cac212be9e070c5a5e2769fb5e76 AS builder
+FROM python:3.13.17-alpine3.23@sha256:df8241c52fff8aefebb789ce9e140fb20e9f1f1ff9e5bca28b2064831eb6ff04 AS builder
 
 COPY --from=uv /uv /usr/local/bin/uv
 WORKDIR /app
@@ -15,7 +15,7 @@ COPY src/ ./src/
 
 RUN uv sync --frozen --no-dev --no-editable
 
-FROM python:3.13.14-alpine3.23@sha256:9fdbf2e3e82628351513560b121e2ee6ce31cac212be9e070c5a5e2769fb5e76 AS runtime
+FROM python:3.13.17-alpine3.23@sha256:df8241c52fff8aefebb789ce9e140fb20e9f1f1ff9e5bca28b2064831eb6ff04 AS runtime
 
 LABEL org.opencontainers.image.source="https://github.com/s-block/browser-use-mcp" \
       org.opencontainers.image.licenses="MIT" \
@@ -24,7 +24,10 @@ LABEL org.opencontainers.image.source="https://github.com/s-block/browser-use-mc
 WORKDIR /app
 COPY --from=builder --chown=10001:10001 /app/.venv /app/.venv
 
-RUN mkdir -m 0700 /data && chown 10001:10001 /data
+# Keep package installers in the builder.
+RUN python -m pip uninstall --yes pip \
+    && python -c "import ensurepip, shutil; from pathlib import Path; shutil.rmtree(Path(ensurepip.__file__).parent)" \
+    && mkdir -m 0700 /data && chown 10001:10001 /data
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
